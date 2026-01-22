@@ -1,0 +1,46 @@
+{
+    "manifest_version": 3,
+    "name": "DriftPick",
+    "version": "1.0",
+    "description": "Your subconscious shopping assistant.",
+    "permissions": [
+        "activeTab",
+        "scripting",
+        "storage"
+    ],
+    "host_permissions": [
+        "https://*.amazon.com/*",
+        "https://*.amazon.in/*"
+    ],
+    "content_scripts": [
+        {
+            "matches": [
+                "https://*.amazon.com/*",
+                "https://*.amazon.in/*"
+            ],
+            "js": [
+                "lib/mediapipe/face_mesh.js",
+                "lib/utils/productDetector.js",
+                "lib/utils/scoring.js",
+                "content.js"
+            ],
+            "css": [
+                "styles.css"
+            ]
+        }
+    ],
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "camera.html",
+                "lib/mediapipe/*"
+            ],
+            "matches": [
+                "<all_urls>"
+            ]
+        }
+    ],
+    "action": {
+        "default_title": "Start DriftPick"
+    }
+}

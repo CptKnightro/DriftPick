@@ -1,0 +1,84 @@
+#driftpick-start-btn {
+    position: fixed !important;
+    /* Force it to stay put */
+    bottom: 20px !important;
+    right: 20px !important;
+    z-index: 2147483647 !important;
+    /* The maximum possible number in CSS */
+    width: 60px;
+    height: 60px;
+    background-color: #000;
+    color: #fff;
+    border: 3px solid #fff;
+    border-radius: 50%;
+    font-family: monospace;
+    font-weight: bold;
+    font-size: 20px;
+    cursor: pointer;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    /* Big shadow to make it pop */
+    transition: all 0.3s ease;
+    display: flex;
+    /* Centers the text */
+    align-items: center;
+    justify-content: center;
+}
+
+#driftpick-start-btn:hover {
+    transform: scale(1.1);
+    background-color: #fff;
+    color: #000;
+    border-color: #000;
+}
+
+#driftpick-start-btn.recording {
+    background-color: red;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7);
+    }
+
+    70% {
+        box-shadow: 0 0 0 15px rgba(255, 0, 0, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 0, 0, 0);
+    }
+}
+
+/* Calibration Points */
+.calibration-point {
+    position: fixed;
+    width: 20px;
+    height: 20px;
+    background-color: red;
+    border-radius: 50%;
+    z-index: 2147483647;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
+    transition: transform 0.2s ease, background-color 0.2s;
+}
+
+.calibration-point.active {
+    background-color: #00ff00;
+    transform: scale(1.5);
+}
+
+/* Gaze Cursor (predicted look point) */
+#gaze-cursor {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    background-color: rgba(255, 0, 0, 0.5);
+    border: 2px solid white;
+    border-radius: 50%;
+    z-index: 2147483646;
+    pointer-events: none;
+    /* Let clicks pass through */
+    transition: all 0.1s ease-out;
+    /* Smooth movement */
+}
