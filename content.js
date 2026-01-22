@@ -1,26 +1,21 @@
 console.log("DriftPick: Loaded and watching.");
 
-// Configuration
+
 let faceMesh;
 let isTracking = false;
 
-// State
-let calibrationData = []; // { inputs: [iX, iY], target: [sX, sY] }
+
+let calibrationData = [];
 let isCalibrating = false;
 
-// Indices (MediaPipe)
 const LEFT_IRIS = [474, 475, 476, 477];
 const LEFT_PUPIL = 468;
 const LEFT_EYE_LEFT = 33;
 const LEFT_EYE_RIGHT = 133;
 
-// Instantiate Logic Managers
-// @ts-ignore
 const productDetector = new ProductDetector();
-// @ts-ignore
 const scoringManager = new ScoringManager();
 
-// 1. UI Elements
 const btn = document.createElement("button");
 btn.id = "driftpick-start-btn";
 btn.innerText = "dp";
@@ -42,12 +37,10 @@ video.onloadedmetadata = () => {
 };
 document.body.appendChild(video);
 
-// 2. Math Helpers (KNN Regression)
 function predictGaze(inputs, data) {
     if (!data || data.length === 0) return null;
 
-    // KNN Regression
-    const K = 5; // Increased K for stability
+    const K = 5;
     const items = data.map(d => {
         const dist = Math.sqrt(
             Math.pow(d.inputs[0] - inputs[0], 2) +
@@ -73,14 +66,12 @@ function predictGaze(inputs, data) {
     return [sumX / totalWeight, sumY / totalWeight];
 }
 
-// 3. Calibration Manager
 async function startCalibration() {
     isCalibrating = true;
     calibrationData = [];
     btn.innerText = "Calibrating...";
     alert("Calibration Mode: Look at the RED dots and CLICK them.");
 
-    // 9-point Grid
     const points = [
         { x: 10, y: 10 }, { x: 50, y: 10 }, { x: 90, y: 10 },
         { x: 10, y: 50 }, { x: 50, y: 50 }, { x: 90, y: 50 },
@@ -98,7 +89,6 @@ async function startCalibration() {
         return;
     }
 
-    // Save Data
     chrome.storage.local.set({ calibrationData: calibrationData }, () => {
         console.log("Calibration saved:", calibrationData.length);
     });
@@ -121,20 +111,16 @@ function showCalibrationPoint(xPct, yPct) {
         document.body.appendChild(pt);
 
         const clickHandler = () => {
-            // Check if we have tracking data
             if (!latestFeatures) {
-                // Flash blue to indicate error/no-face
                 pt.style.backgroundColor = "blue";
                 setTimeout(() => pt.style.backgroundColor = "red", 200);
                 console.warn("DriftPick: No face detected during click!");
-                return; // Do not resolve, make them click again when ready
+                return;
             }
 
-            // Record Data
             const screenX = window.innerWidth * (xPct / 100);
             const screenY = window.innerHeight * (yPct / 100);
 
-            // Push multiple samples
             calibrationData.push({
                 inputs: latestFeatures,
                 target: [screenX, screenY]
@@ -150,10 +136,9 @@ function showCalibrationPoint(xPct, yPct) {
 }
 
 
-// 4. Initialization
 async function initFaceMesh() {
     console.log("DriftPick: Initializing FaceMesh...");
-    // @ts-ignore
+
     faceMesh = new FaceMesh({
         locateFile: (file) => {
             return chrome.runtime.getURL(`lib/mediapipe/${file}`);
@@ -173,57 +158,46 @@ async function initFaceMesh() {
 
 let latestFeatures = null;
 
-// 5. Results Loop
+
 function onResults(results) {
     if (!results.multiFaceLandmarks || results.multiFaceLandmarks.length === 0) return;
     const landmarks = results.multiFaceLandmarks[0];
 
-    // Feature Extraction
     const pupil = landmarks[LEFT_PUPIL];
     const leftCorner = landmarks[LEFT_EYE_LEFT];
     const rightCorner = landmarks[LEFT_EYE_RIGHT];
-
-    // Vector arithmetic
     const eyeWidth = Math.sqrt(Math.pow(rightCorner.x - leftCorner.x, 2) + Math.pow(rightCorner.y - leftCorner.y, 2));
-
-    // Normalize iris position relative to eye width
     const relX = (pupil.x - leftCorner.x) / eyeWidth;
     const relY = (pupil.y - leftCorner.y) / eyeWidth;
 
     latestFeatures = [relX, relY];
 
     if (isCalibrating) {
-        // Do nothing
+
     } else if (calibrationData.length > 0) {
-        // Predict
+
         const prediction = predictGaze(latestFeatures, calibrationData);
         if (prediction) {
             const [pX, pY] = prediction;
             moveCursor(pX, pY);
 
-            // --- SCORING LOGIC ---
-            // Use hit tests
+
             const element = document.elementFromPoint(pX, pY);
             if (element) {
                 const card = productDetector.findProductCard(element);
                 const asin = productDetector.getProductId(card);
 
-                // Update Scoring (pass null if looking at nothing, to reset timers or log drift)
                 scoringManager.update(asin, Date.now());
 
-                // Optional: Highlight card?
-                // if(card) card.style.outline = "2px solid red";
             }
         }
     }
 }
 
 function moveCursor(x, y) {
-    // Basic smoothing could be added here
     gazeCursor.style.transform = `translate(${x}px, ${y}px)`;
 }
 
-// 6. Start 
 async function startTracking() {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -231,7 +205,7 @@ async function startTracking() {
 
         await initFaceMesh();
 
-        // Load existing calibration
+
         chrome.storage.local.get(['calibrationData'], (result) => {
             if (result.calibrationData) {
                 calibrationData = result.calibrationData;
